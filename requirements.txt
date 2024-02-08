@@ -1,2 +1,3 @@
 polars
 plotly
+./target/wheels/gambling_simulator-0.1.0-cp311-cp311-macosx_10_12_x86_64.whl
