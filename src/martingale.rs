@@ -26,16 +26,16 @@ impl Outcome {
     }
 }
 
-struct EndCondition {
-    n_simulations: i32,
-    max_games: i32,
-    init_wealth: f64,
+pub struct EndCondition {
+    pub n_simulations: i32,
+    pub max_games: i32,
+    pub init_wealth: f64,
 }
 
-struct GameSetting {
-    win_rate: f64,
-    odds: f64,
-    stake: f64,
+pub struct GameSetting {
+    pub win_rate: f64,
+    pub odds: f64,
+    pub stake: f64,
 }
 
 struct GameResult {
@@ -44,9 +44,9 @@ struct GameResult {
     wealth_sequence: Vec<f64>,
 }
 
-struct SimulationResult {
-    games: Vec<i32>,
-    final_wealth: Vec<f64>,
+pub struct SimulationResult {
+    pub games: Vec<i32>,
+    pub final_wealth: Vec<f64>,
 }
 
 #[pyclass]
@@ -110,19 +110,12 @@ fn play_game(end: &EndCondition, game: &GameSetting, total_result: &mut Simulati
     }
 }
 
-pub fn martingale_main() -> OutputResult{
-    // parameters
-    // let file_path = "/Users/alexlo/Downloads/martingale.csv";
-    let end= EndCondition {
-        n_simulations: 1_000,
-        max_games: 30,
-        init_wealth: 10_000.0,
-    };
-    let game = GameSetting {
-        win_rate: 0.5,
-        odds: 1.75,
-        stake: 100.0,
-    };
+pub fn martingale_main(
+        end: &EndCondition,
+        game: &GameSetting,
+    ) -> OutputResult{
+
+    // Result container
     let mut total_result = SimulationResult {
         games: vec![],
         final_wealth: vec![],
@@ -142,11 +135,12 @@ pub fn martingale_main() -> OutputResult{
         .collect();
     let df: OutputResult = OutputResult {
         nth: (0..total_result.games.len() as i32).collect(),
-        play_times: total_result.games,
+        play_times: total_result.games.clone(),
         final_wealth: final_wealth_i32,
     };
 
     // Save result to csv
+    // let file_path = "/Users/alexlo/Downloads/martingale.csv";
     // df.write_to_csv(file_path).expect("寫入文件失敗");
 
     return df
