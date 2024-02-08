@@ -50,6 +50,7 @@ pub struct SimulationResult {
 }
 
 #[pyclass]
+#[derive(Debug)]
 pub struct OutputResult {
     pub nth: Vec<i32>,
     pub play_times: Vec<i32>,
@@ -79,7 +80,7 @@ fn play_game(end: &EndCondition, game: &GameSetting, total_result: &mut Simulati
     let mut result = GameResult {
         stake_sequence:  vec![game.stake,],
         return_sequence: vec![0.0,],
-        wealth_sequence: vec![end.init_wealth,],
+        wealth_sequence: vec![end.init_wealth-game.stake,],
     };
 
     let mut rng = rand::thread_rng();
@@ -95,19 +96,29 @@ fn play_game(end: &EndCondition, game: &GameSetting, total_result: &mut Simulati
         let last_stake = result.stake_sequence.last().unwrap().clone();
         let this_return = outcome.compute_return(last_stake, game.odds);
         let next_stake = outcome.compute_decision(last_stake, game.odds, game.stake);
-        let this_wealth = result.wealth_sequence.last().unwrap() + this_return;
+        let this_wealth = result.wealth_sequence.last().unwrap() + this_return - next_stake;
         result.return_sequence.push(this_return);
-        result.stake_sequence.push(next_stake);
-        result.wealth_sequence.push(this_wealth);
 
         // Check if the game should be terminated
         let n_games = result.return_sequence.len() as i32;
-        if (next_stake > this_wealth) | (n_games >= end.max_games){
-            total_result.final_wealth.push(this_wealth);
+        if (this_wealth < 0.) | (n_games >= end.max_games){
+            result.stake_sequence.push(0.);
+            result.wealth_sequence.push(this_wealth+next_stake);
+            total_result.final_wealth.push(this_wealth+next_stake);
             total_result.games.push(n_games);
             break;
+        } else {
+            result.stake_sequence.push(next_stake);
+            result.wealth_sequence.push(this_wealth);
         }
     }
+
+    // Check if answers make sense
+    // if result.wealth_sequence.last().unwrap() > &150_000.0 {
+    //     println!("財富: {:?}", result.wealth_sequence);
+    //     println!("報酬: {:?}", result.return_sequence);
+    //     println!("下注: {:?}", result.stake_sequence);
+    // }
 }
 
 pub fn martingale_main(
