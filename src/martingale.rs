@@ -39,9 +39,9 @@ pub struct GameSetting {
 }
 
 struct GameResult {
-    stake_sequence: Vec<f64>,
     return_sequence: Vec<f64>,
     wealth_sequence: Vec<f64>,
+    stake_sequence: Vec<f64>,
 }
 
 pub struct SimulationResult {
@@ -78,9 +78,9 @@ impl OutputResult {
 
 fn play_game(end: &EndCondition, game: &GameSetting, total_result: &mut SimulationResult){
     let mut result = GameResult {
-        stake_sequence:  vec![game.stake,],
         return_sequence: vec![0.0,],
-        wealth_sequence: vec![end.init_wealth-game.stake,],
+        wealth_sequence: vec![end.init_wealth,],
+        stake_sequence:  vec![game.stake,],
     };
 
     let mut rng = rand::thread_rng();
@@ -95,26 +95,32 @@ fn play_game(end: &EndCondition, game: &GameSetting, total_result: &mut Simulati
         // Update return and next stake
         let last_stake = result.stake_sequence.last().unwrap().clone();
         let this_return = outcome.compute_return(last_stake, game.odds);
+        let this_wealth = result.wealth_sequence.last().unwrap() + this_return;
         let next_stake = outcome.compute_decision(last_stake, game.odds, game.stake);
-        let this_wealth = result.wealth_sequence.last().unwrap() + this_return - next_stake;
         result.return_sequence.push(this_return);
+        result.wealth_sequence.push(this_wealth);
 
         // Check if the game should be terminated
         let n_games = result.return_sequence.len() as i32;
-        if (this_wealth < 0.) | (n_games >= end.max_games){
-            result.stake_sequence.push(0.);
-            result.wealth_sequence.push(this_wealth+next_stake);
-            total_result.final_wealth.push(this_wealth+next_stake);
-            total_result.games.push(n_games);
-            break;
-        } else {
+        if (this_wealth-next_stake >= 0.) & (n_games < end.max_games){
             result.stake_sequence.push(next_stake);
-            result.wealth_sequence.push(this_wealth);
+        } else {
+            result.stake_sequence.push(0.);
+            total_result.final_wealth.push(this_wealth);
+            total_result.games.push(n_games);
+
+            // Check if answers make sense
+            if this_wealth > 200_000. {
+                println!("財富: {:?}", result.wealth_sequence);
+                println!("報酬: {:?}", result.return_sequence);
+                println!("下注: {:?}", result.stake_sequence);
+            }
+            break;
         }
     }
 
     // Check if answers make sense
-    // if result.wealth_sequence.last().unwrap() > &150_000.0 {
+    // if result.wealth_sequence.last().unwrap() < &1_000.0 {
     //     println!("財富: {:?}", result.wealth_sequence);
     //     println!("報酬: {:?}", result.return_sequence);
     //     println!("下注: {:?}", result.stake_sequence);
