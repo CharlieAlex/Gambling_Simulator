@@ -13,7 +13,7 @@ enum Outcome {
 impl Outcome {
     fn compute_return(&self, last_stake:f64, odds:f64,) -> f64 {
         match self {
-            Outcome::Win => last_stake * odds,
+            Outcome::Win => last_stake*odds - last_stake,
             Outcome::Lose => -last_stake,
         }
     }
@@ -95,8 +95,8 @@ fn play_game(end: &EndCondition, game: &GameSetting, total_result: &mut Simulati
         // Update return and next stake
         let last_stake = result.stake_sequence.last().unwrap().clone();
         let this_return = outcome.compute_return(last_stake, game.odds);
-        let this_wealth = result.wealth_sequence.last().unwrap() + this_return;
         let next_stake = outcome.compute_decision(last_stake, game.odds, game.stake);
+        let this_wealth = result.wealth_sequence.last().unwrap() + this_return;
         result.return_sequence.push(this_return);
         result.wealth_sequence.push(this_wealth);
 
@@ -110,7 +110,7 @@ fn play_game(end: &EndCondition, game: &GameSetting, total_result: &mut Simulati
             total_result.games.push(n_games);
 
             // Check if answers make sense
-            if this_wealth > 200_000. {
+            if this_wealth <= 10. {
                 println!("財富: {:?}", result.wealth_sequence);
                 println!("報酬: {:?}", result.return_sequence);
                 println!("下注: {:?}", result.stake_sequence);
