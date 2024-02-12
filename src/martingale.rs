@@ -1,8 +1,7 @@
 use rand::prelude::*;
 use pyo3::prelude::*;
-// use std::error::Error;
-// use csv::Writer;
-// use std::fmt::Display;
+use std::error::Error;
+use csv::Writer;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum Outcome {
@@ -24,6 +23,14 @@ impl Outcome {
             Outcome::Lose => last_stake * odds,
         }
     }
+
+    #[allow(dead_code)]
+    fn compute_decision_anti(&self, this_wealth:f64, stake_ratio:f64) -> f64 {
+        match self {
+            Outcome::Win => this_wealth*stake_ratio,
+            Outcome::Lose => this_wealth*stake_ratio,
+        }
+    }
 }
 
 pub struct EndCondition {
@@ -38,10 +45,20 @@ pub struct GameSetting {
     pub stake: f64,
 }
 
-struct GameResult {
-    return_sequence: Vec<f64>,
-    wealth_sequence: Vec<f64>,
-    stake_sequence: Vec<f64>,
+pub struct GameResult {
+    pub return_sequence: Vec<f64>,
+    pub wealth_sequence: Vec<f64>,
+    pub stake_sequence: Vec<f64>,
+}
+
+impl GameResult {
+    fn new() -> GameResult {
+        GameResult {
+            return_sequence: vec![0.; 0],
+            wealth_sequence: vec![0.; 0],
+            stake_sequence: vec![0.; 0],
+        }
+    }
 }
 
 pub struct SimulationResult {
@@ -58,25 +75,27 @@ pub struct OutputResult {
 }
 
 impl OutputResult {
-    // fn write_to_csv(&self, file_path: &str) -> Result<(), Box<dyn Error>> {
-    //     let mut writer = Writer::from_path(file_path)?;
-    //     let min_len = self.nth.len().min(self.play_times.len()).min(self.final_wealth.len());
+    #[allow(dead_code)]
+    fn write_to_csv(&self, file_path: &str) -> Result<(), Box<dyn Error>> {
+        let mut writer = Writer::from_path(file_path)?;
+        let min_len = self.nth.len().min(self.play_times.len()).min(self.final_wealth.len());
 
-    //     writer.write_record(&["nth", "play_times", "final_wealth"])?;
-    //     for i in 0..min_len {
-    //         writer.write_record(&[
-    //             self.nth[i].to_string(),
-    //             self.play_times[i].to_string(),
-    //             self.final_wealth[i].to_string(),
-    //         ])?;
-    //     }
+        writer.write_record(&["nth", "play_times", "final_wealth"])?;
+        for i in 0..min_len {
+            writer.write_record(&[
+                self.nth[i].to_string(),
+                self.play_times[i].to_string(),
+                self.final_wealth[i].to_string(),
+            ])?;
+        }
 
-    //     writer.flush()?;
-    //     Ok(())
-    // }
+        writer.flush()?;
+        Ok(())
+    }
 }
 
-fn play_game(end: &EndCondition, game: &GameSetting, total_result: &mut SimulationResult){
+fn play_game(end: &EndCondition, game: &GameSetting, total_result: &mut SimulationResult)
+    -> GameResult{
     let mut result = GameResult {
         return_sequence: vec![0.0,],
         wealth_sequence: vec![end.init_wealth,],
@@ -96,7 +115,7 @@ fn play_game(end: &EndCondition, game: &GameSetting, total_result: &mut Simulati
         let last_stake = result.stake_sequence.last().unwrap().clone();
         let this_return = outcome.compute_return(last_stake, game.odds);
         let next_stake = outcome.compute_decision(last_stake, game.odds, game.stake);
-        let this_wealth = result.wealth_sequence.last().unwrap() + this_return;
+        let this_wealth = result.wealth_sequence.last().unwrap() + this_return; //wealth at the end of each game
         result.return_sequence.push(this_return);
         result.wealth_sequence.push(this_wealth);
 
@@ -109,28 +128,17 @@ fn play_game(end: &EndCondition, game: &GameSetting, total_result: &mut Simulati
             total_result.final_wealth.push(this_wealth);
             total_result.games.push(n_games);
 
-            // Check if answers make sense
-            if this_wealth <= 10. {
-                println!("財富: {:?}", result.wealth_sequence);
-                println!("報酬: {:?}", result.return_sequence);
-                println!("下注: {:?}", result.stake_sequence);
-            }
             break;
         }
     }
 
-    // Check if answers make sense
-    // if result.wealth_sequence.last().unwrap() < &1_000.0 {
-    //     println!("財富: {:?}", result.wealth_sequence);
-    //     println!("報酬: {:?}", result.return_sequence);
-    //     println!("下注: {:?}", result.stake_sequence);
-    // }
+    result
 }
 
 pub fn martingale_main(
         end: &EndCondition,
         game: &GameSetting,
-    ) -> OutputResult{
+    ) -> (OutputResult, GameResult){
 
     // Result container
     let mut total_result = SimulationResult {
@@ -139,9 +147,10 @@ pub fn martingale_main(
     };
 
     // Simulation
+    let mut last_game_df = GameResult::new();
     let mut n = 1;
     while n <= end.n_simulations {
-        play_game(&end, &game, &mut total_result);
+        last_game_df = play_game(&end, &game, &mut total_result);
         n += 1;
     }
 
@@ -160,5 +169,5 @@ pub fn martingale_main(
     // let file_path = "/Users/alexlo/Downloads/martingale.csv";
     // df.write_to_csv(file_path).expect("寫入文件失敗");
 
-    return df
+    (df, last_game_df)
 }

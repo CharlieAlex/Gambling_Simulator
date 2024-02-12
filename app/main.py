@@ -3,9 +3,9 @@ import polars as pl
 import plotly.express as px
 import plotly.graph_objs as go
 
-def play_martingale_game(params:dict[str, float])->pl.DataFrame:
+def play_martingale_game(params:dict[str, float])->tuple[pl.DataFrame, pl.DataFrame]:
 
-    data = gambling_simulator.play_martingale(
+    output, last_process = gambling_simulator.play_martingale(
         params['n_simulations'],
         params['max_games'],
         params['init_wealth'],
@@ -13,9 +13,7 @@ def play_martingale_game(params:dict[str, float])->pl.DataFrame:
         params['odds'],
         params['stake'],
     )
-    df = pl.DataFrame(data)
-    print(df.head())
-    return df
+    return pl.DataFrame(output), pl.DataFrame(last_process)
 
 def compute_stats(df:pl.DataFrame)->pl.DataFrame:
     return (df
@@ -43,5 +41,22 @@ def plot_wealth_dist(df:pl.DataFrame, init_wealth:int)->go.Figure:
     )
 
     fig.add_vline(x=init_wealth, line_dash="solid", line_color="red")
+
+    return fig
+
+def plot_process_lineplot(df:pl.DataFrame)->go.Figure:
+    df = df.with_columns(pl.Series('round', range(0, df.height)))
+
+    fig = go.Figure()
+    fig.add_scatter(x=df['round'], y=df['wealth'], mode='lines+markers', name='Wealth')
+    fig.add_scatter(x=df['round'], y=df['return'], mode='lines+markers', name='Return')
+    fig.add_hline(y=df['wealth'][0], line_dash="solid", line_color="red")
+    fig.add_hline(y=df['return'][0], line_dash="solid", line_color="red")
+    fig.update_layout(
+        title="Last Round Result",
+        xaxis_title="Games",
+        yaxis_title="Money",
+    )
+    fig.update_xaxes(range=[0, df.height])
 
     return fig

@@ -1,5 +1,9 @@
 import streamlit as st
-from app.main import play_martingale_game, plot_wealth_dist, compute_stats, compute_earnrate
+from app.main import (
+    play_martingale_game,
+    plot_wealth_dist, plot_process_lineplot,
+    compute_stats, compute_earnrate
+)
 
 st.title('Martingale Simulator')
 
@@ -12,8 +16,9 @@ params = {
     'stake': st.number_input('Stake', value=100)
 }
 
-# if st.button('Start Simulation'):
-df = play_martingale_game(params)
-st.write(f'賺錢機率: {compute_earnrate(df, params["init_wealth"])}')
-st.dataframe(compute_stats(df))
-st.plotly_chart(plot_wealth_dist(df, params['init_wealth']))
+if st.button('Start Simulation'):
+    output, last_process = play_martingale_game(params)
+    st.write(f'賺錢機率: {compute_earnrate(output, params["init_wealth"])}')
+    st.plotly_chart(plot_process_lineplot(last_process))
+    st.plotly_chart(plot_wealth_dist(output, params['init_wealth']))
+    st.table(compute_stats(output))
