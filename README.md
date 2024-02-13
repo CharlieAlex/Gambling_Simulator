@@ -28,7 +28,7 @@
     - Odds: 賠率
     - Stake: 最低下注金額
 <div style="display: flex;">
-  <img src="images/parameters.png?raw=true" alt="Parameters" style="width: 70%;">
+  <img src="images/parameters.png?raw=true" alt="Parameters" style="width: 100%;">
 </div>
 
 備註: 理論上此程式應該要能 deploy 上 Streamlit 使用，然而目前 Streamlit 似乎尚未支援 Rust。
@@ -40,16 +40,16 @@
 同時我們會產出最後一次的整個過程，讓使用者大致理解遊戲如何進行。
 
 <div style="display: flex;">
-  <img src="images/last_round.png?raw=true" alt="Parameters" style="width: 70%;">
+  <img src="images/last_round.png?raw=true" alt="Parameters" style="width: 100%;">
 </div>
 
 當然我們也會產出所有模擬結果的統計與分配圖。
 
 <div style="display: flex;">
-  <img src="images/dist.png?raw=true" alt="Parameters" style="width: 70%;">
+  <img src="images/dist.png?raw=true" alt="Parameters" style="width: 100%;">
 </div>
 <div style="display: flex;">
-  <img src="images/statistic.png?raw=true" alt="Parameters" style="width: 70%;">
+  <img src="images/statistic.png?raw=true" alt="Parameters" style="width: 100%;">
 </div>
 
 從大部分的統計結果可以看出此方法的賺錢機率並沒有想像中高，
